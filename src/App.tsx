@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom'
 import './index.css'
 
 type ShortLinkPayload = {
@@ -6,7 +7,49 @@ type ShortLinkPayload = {
   expired_at?: string | null
 }
 
-function App() {
+type ShortenerPageProps = {
+  apiBaseUrl: string
+}
+
+type ShortLinkLoaderProps = {
+  apiBaseUrl: string
+}
+
+function ShortLinkLoader({ apiBaseUrl }: ShortLinkLoaderProps) {
+  const { short_code } = useParams<{ short_code?: string }>()
+  const [statusMessage, setStatusMessage] = useState('Loading your destination...')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!short_code) {
+      setError('No short code was provided.')
+      return
+    }
+
+    setStatusMessage('Redirecting to the original link...')
+    setError('')
+
+    try {
+      window.location.replace(`${apiBaseUrl}/shortlink/${encodeURIComponent(short_code)}`)
+    } catch (err) {
+      setStatusMessage('')
+      setError(err instanceof Error ? err.message : 'Unable to resolve this short link.')
+    }
+  }, [apiBaseUrl, short_code])
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 px-4 py-10 text-slate-800 sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-xl flex-col items-center rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur sm:p-10" aria-live="polite">
+        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Opening your link</h1>
+        <p className="mt-2 text-sm text-slate-600">{statusMessage}</p>
+        {error ? <p className="mt-4 text-sm font-medium text-red-600">{error}</p> : null}
+      </section>
+    </main>
+  )
+}
+
+function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
   const [originalUrl, setOriginalUrl] = useState('')
   const [shortenedUrl, setShortenedUrl] = useState('')
   const [error, setError] = useState('')
@@ -14,29 +57,6 @@ function App() {
   const [copyState, setCopyState] = useState('Copy')
   const [statusMessage, setStatusMessage] = useState('')
   const [expiredAt, setExpiredAt] = useState('')
-
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin
-
-  useEffect(() => {
-    const path = window.location.pathname.replace(/^\/+|\/+$/g, '')
-    if (!path || path === 'shortlink') {
-      return
-    }
-
-    const resolveShortLink = () => {
-      setStatusMessage('Redirecting to the original link...')
-      setError('')
-
-      try {
-        window.location.replace(`${apiBaseUrl}/shortlink/${encodeURIComponent(path)}`)
-      } catch (err) {
-        setStatusMessage('')
-        setError(err instanceof Error ? err.message : 'Unable to resolve this short link.')
-      }
-    }
-
-    resolveShortLink()
-  }, [apiBaseUrl])
 
   const handleCopy = async () => {
     if (!shortenedUrl) {
@@ -72,6 +92,7 @@ function App() {
     setError('')
     setShortenedUrl('')
     setExpiredAt('')
+    setStatusMessage('')
 
     try {
       const response = await fetch(`${apiBaseUrl}/shortlink`, {
@@ -128,64 +149,78 @@ function App() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 px-4 py-10 text-slate-800 sm:px-6 lg:px-8">
       <section className="mx-auto flex w-full max-w-2xl flex-col rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur sm:p-10" aria-labelledby="shortener-title">
-          <div className="mb-8 text-center">
-            <p className="mb-3 inline-flex rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
-              URL Shortener
-            </p>
-            <h1 id="shortener-title" className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              Shorten your link in seconds
-            </h1>
-          </div>
+        <div className="mb-8 text-center">
+          <p className="mb-3 inline-flex rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
+            URL Shortener
+          </p>
+          <h1 id="shortener-title" className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            Shorten your link in seconds
+          </h1>
+        </div>
 
-          <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-            <label className="sr-only" htmlFor="original-url">
-              Original URL
-            </label>
-            <input
-              id="original-url"
-              name="original-url"
-              type="url"
-              placeholder="https://myexample.com"
-              value={originalUrl}
-              onChange={(event) => setOriginalUrl(event.target.value)}
-              className="w-full rounded-full border border-slate-300 px-4 py-3 text-base shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="rounded-full bg-indigo-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-80"
-            >
-              {isLoading ? 'Shortening...' : 'Shorten URL'}
-            </button>
-          </form>
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+          <label className="sr-only" htmlFor="original-url">
+            Original URL
+          </label>
+          <input
+            id="original-url"
+            name="original-url"
+            type="url"
+            placeholder="https://myexample.com"
+            value={originalUrl}
+            onChange={(event) => setOriginalUrl(event.target.value)}
+            className="w-full rounded-full border border-slate-300 px-4 py-3 text-base shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          />
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="rounded-full bg-indigo-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-80"
+          >
+            {isLoading ? 'Shortening...' : 'Shorten URL'}
+          </button>
+        </form>
 
-          {statusMessage ? <p className="mt-4 text-sm font-medium text-indigo-600">{statusMessage}</p> : null}
-          {error ? <p className="mt-4 text-sm font-medium text-red-600">{error}</p> : null}
+        {statusMessage ? <p className="mt-4 text-sm font-medium text-indigo-600">{statusMessage}</p> : null}
+        {error ? <p className="mt-4 text-sm font-medium text-red-600">{error}</p> : null}
 
-          {shortenedUrl ? (
-            <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50 p-4" role="status">
-              <p className="mb-1 text-sm font-semibold text-slate-700">Shortened URL</p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <a className="break-all text-sm font-medium text-indigo-700 underline" href={shortenedUrl} target="_blank" rel="noreferrer">
-                  {shortenedUrl}
-                </a>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
-                >
-                  {copyState}
-                </button>
-              </div>
-              {expiredAt ? (
-                <p className="mt-2 text-sm text-slate-600">
-                  Expires at: <span className="font-medium text-slate-700">{new Date(expiredAt).toLocaleString()}</span>
-                </p>
-              ) : null}
+        {shortenedUrl ? (
+          <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50 p-4" role="status">
+            <p className="mb-1 text-sm font-semibold text-slate-700">Shortened URL</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <a className="break-all text-sm font-medium text-indigo-700 underline" href={shortenedUrl} target="_blank" rel="noreferrer">
+                {shortenedUrl}
+              </a>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+              >
+                {copyState}
+              </button>
             </div>
-          ) : null}
+            {expiredAt ? (
+              <p className="mt-2 text-sm text-slate-600">
+                Expires at: <span className="font-medium text-slate-700">{new Date(expiredAt).toLocaleString()}</span>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </main>
+  )
+}
+
+function App() {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ShortenerPage apiBaseUrl={apiBaseUrl} />} />
+        <Route path="/shortlink" element={<ShortenerPage apiBaseUrl={apiBaseUrl} />} />
+        <Route path="/:short_code" element={<ShortLinkLoader apiBaseUrl={apiBaseUrl} />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
