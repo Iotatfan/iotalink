@@ -145,7 +145,7 @@ function App() {
               id="original-url"
               name="original-url"
               type="url"
-              placeholder="https://example.com"
+              placeholder="https://myexample.com"
               value={originalUrl}
               onChange={(event) => setOriginalUrl(event.target.value)}
               className="w-full rounded-full border border-slate-300 px-4 py-3 text-base shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
