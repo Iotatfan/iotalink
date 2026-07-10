@@ -77,8 +77,8 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
         const detail =
           typeof payload === 'string'
             ? payload
-            : payload && typeof payload === 'object'
-              ? 'Unable to shorten the URL.'
+            : payload && typeof payload === 'object' && (payload as any).error
+              ? String((payload as any).error)
               : 'Unable to shorten the URL.'
 
         throw new Error(detail)
