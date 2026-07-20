@@ -9,6 +9,8 @@ type ShortenerPageProps = {
   apiBaseUrl: string
 }
 
+
+
 export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
   const [originalUrl, setOriginalUrl] = useState('')
   const [shortenedUrl, setShortenedUrl] = useState('')
@@ -17,6 +19,22 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
   const [copyState, setCopyState] = useState('Copy')
   const [statusMessage, setStatusMessage] = useState('')
   const [expiredAt, setExpiredAt] = useState('')
+  const [selectedExpiryDays, setSelectedExpiryDays] = useState(10)
+
+  const EXPIRY_TIME = [
+    {
+      "text": "10 Days",
+      "value": "10"
+    },
+    {
+      "text": "15 Days",
+      "value": "15"
+    },
+    {
+      "text": "30 Days",
+      "value": "30"
+    }
+  ]
 
   const handleCopy = async () => {
     if (!shortenedUrl) {
@@ -60,7 +78,10 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ original_url: normalizedUrl }),
+        body: JSON.stringify({
+          original_url: normalizedUrl,
+          expiry_days: selectedExpiryDays,
+        }),
       })
 
       const contentType = response.headers.get('content-type') ?? ''
@@ -129,15 +150,37 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
             placeholder="https://myexample.com"
             value={originalUrl}
             onChange={(event) => setOriginalUrl(event.target.value)}
-            className="w-full rounded-full border border-slate-300 px-4 py-3 text-base shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
           />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="rounded-full bg-indigo-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-80"
-          >
-            {isLoading ? 'Shortening...' : 'Shorten URL'}
-          </button>
+          <div className='flex justify-between'>
+            <div className='flex flex-col'>
+              <label htmlFor="expires">
+                Expires
+              </label>
+
+              <select id="expires"
+                className='border rounded-sm'
+                value={selectedExpiryDays}
+                onChange={(event) => setSelectedExpiryDays(Number(event.target.value))}
+              >
+                {EXPIRY_TIME.map((exp) => (
+                  <option value={exp.value} key={exp.value}>
+                    {exp.text}
+                  </option>
+                ))}
+              </select>
+
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="rounded-2xl bg-indigo-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-80"
+            >
+              {isLoading ? 'Shortening...' : 'Shorten URL'}
+            </button>
+
+          </div>
+
         </form>
 
         {statusMessage ? <p className="mt-4 text-sm font-medium text-indigo-600">{statusMessage}</p> : null}
