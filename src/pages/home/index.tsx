@@ -129,7 +129,7 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 px-4 py-10 text-slate-800 sm:px-6 lg:px-8">
-      <section className="mx-auto flex w-full max-w-2xl flex-col rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur sm:p-10" aria-labelledby="shortener-title">
+      <section className="mx-auto flex w-full max-w-4xl flex-col p-8 backdrop-blur sm:p-10" aria-labelledby="shortener-title">
         <div className="mb-8 text-center">
           <p className="mb-3 inline-flex rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
             URL Shortener
@@ -147,24 +147,27 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
             id="original-url"
             name="original-url"
             type="url"
-            placeholder="https://myexample.com"
+            placeholder="https://example.com"
             value={originalUrl}
             onChange={(event) => setOriginalUrl(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base bg-white/90 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
           />
-          <div className='flex justify-between'>
+          <div className="mx-auto mt-8 flex w-full max-w-2xl flex-col rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur sm:p-10">
+
             <div className='flex flex-col'>
-              <label htmlFor="expires">
-                Expires
+              <label htmlFor="expires" className='mb-3 inline-flex py-1 text-base font-semibold'>
+                Expires in
               </label>
 
               <select id="expires"
-                className='border rounded-sm'
+                className='w-full border border-slate-300 rounded-2xl px-4 py-3 text-base'
                 value={selectedExpiryDays}
                 onChange={(event) => setSelectedExpiryDays(Number(event.target.value))}
               >
                 {EXPIRY_TIME.map((exp) => (
-                  <option value={exp.value} key={exp.value}>
+                  <option
+                    className='mx-auto text-base rounded-3xl'
+                    value={exp.value} key={exp.value}>
                     {exp.text}
                   </option>
                 ))}
@@ -174,10 +177,33 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="rounded-2xl bg-indigo-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-80"
+              className="rounded-2xl my-5 bg-indigo-600 px-5 py-3 text-base font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-80"
             >
-              {isLoading ? 'Shortening...' : 'Shorten URL'}
+              {isLoading ? 'Shortening...' : 'Shorten Now'}
             </button>
+
+            {shortenedUrl ? (
+              <div className="mt-5 border-t border-gray-400 bg-white/90 p-4" role="status">
+                <p className="mb-1 text-sm font-semibold text-slate-700">Shortened URL</p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <a className="break-all text-sm font-medium text-indigo-700 underline" href={shortenedUrl} target="_blank" rel="noreferrer">
+                    {shortenedUrl}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                  >
+                    {copyState}
+                  </button>
+                </div>
+                {expiredAt ? (
+                  <p className="mt-2 text-sm text-slate-600">
+                    Expires at: <span className="font-medium text-slate-700">{new Date(expiredAt).toLocaleString()}</span>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
           </div>
 
@@ -186,28 +212,7 @@ export function ShortenerPage({ apiBaseUrl }: ShortenerPageProps) {
         {statusMessage ? <p className="mt-4 text-sm font-medium text-indigo-600">{statusMessage}</p> : null}
         {error ? <p className="mt-4 text-sm font-medium text-red-600">{error}</p> : null}
 
-        {shortenedUrl ? (
-          <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50 p-4" role="status">
-            <p className="mb-1 text-sm font-semibold text-slate-700">Shortened URL</p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <a className="break-all text-sm font-medium text-indigo-700 underline" href={shortenedUrl} target="_blank" rel="noreferrer">
-                {shortenedUrl}
-              </a>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
-              >
-                {copyState}
-              </button>
-            </div>
-            {expiredAt ? (
-              <p className="mt-2 text-sm text-slate-600">
-                Expires at: <span className="font-medium text-slate-700">{new Date(expiredAt).toLocaleString()}</span>
-              </p>
-            ) : null}
-          </div>
-        ) : null}
+
       </section>
     </main>
   )
